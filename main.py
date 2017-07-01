@@ -19,3 +19,4 @@ if __name__ == "__main__":
     db = Database()
     monitor = ChangeMonitor(datetime.now(), 7)
     monitor.scan(dbx, db)
+    monitor.summary_update(db)

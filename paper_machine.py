@@ -8,7 +8,7 @@ import dateutil.relativedelta as relativedelta
 
 DocMonitorInfo = namedtuple(
     'DocMonitorInfo', ['revision', 'last_monitor_time', 'last_update_time'])
-DocNotifyInfo = namedtuple('DocNotifyInfo', ['doc_id', 'author', 'title'])
+DocNotifyInfo = namedtuple('DocNotifyInfo', ['doc_id', 'owner', 'title'])
 
 
 class Database:
@@ -70,8 +70,9 @@ class ChangeMonitor:
         """
         self.monitor_time = monitor_time
         self.since_n_days = since_n_days
-        self.outdated_date = monitor_time - relativedelta.relativedelta(
-            day=since_n_days)
+        self.outdated_time = monitor_time - relativedelta.relativedelta(
+            days=since_n_days)
+        logging.info("outdated_time: %s" % self.outdated_time)
 
     def filter_possibly_outdated_doc_ids(self, db, doc_ids):
         """
@@ -85,7 +86,7 @@ class ChangeMonitor:
                 return True
             else:
                 last_monitor_time = doc_monitor_info.last_monitor_time
-                return last_monitor_time < self.outdated_date
+                return last_monitor_time < self.outdated_time
 
         return list(filter(_possibly_oudated, doc_ids))
 
@@ -127,9 +128,14 @@ class ChangeMonitor:
         If last_update_time > self.oudated_date, add to notify queue
         """
         doc_monitor_info = db.doc_monitor_info(doc_id)
-        if doc_monitor_info.last_update_time > self.outdated_date:
+        if doc_monitor_info.last_update_time > self.outdated_time:
             logging.info(
                 "add to notify queue. doc_id: %s, last_update_time: %s" %
                 (doc_id, doc_monitor_info.last_update_time))
             db.add_notify_info(
-                DocNotifyInfo(doc_id, export_res.author, export_res.title))
+                DocNotifyInfo(doc_id, export_res.owner, export_res.title))
+
+    def summary_update(self, db):
+        notify_info = db.get_notify_info()
+        for info in notify_info:
+            print("Owner: %s, Doc: %s" % (info.owner, info.title))
