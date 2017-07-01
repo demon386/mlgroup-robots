@@ -108,7 +108,8 @@ class ChangeMonitor:
         if doc_monitor_info is None:
             logging.info("inserting new doc_id: %s, revision: %d" %
                          (doc_id, new_revision))
-            db.set_monitor_info(doc_id, DocMonitorInfo(export_res.revision, now, now))
+            db.set_monitor_info(doc_id,
+                                DocMonitorInfo(export_res.revision, now, now))
         else:
             logging.info("updating existing doc_id: %s" % doc_id)
             old_revision = doc_monitor_info.revision
@@ -121,7 +122,8 @@ class ChangeMonitor:
                 logging.info(
                     "revision remained the same, maintain last_update_time: %s"
                     % update_time)
-            db.set_monitor_info(doc_id, DocMonitorInfo(new_revision, now, update_time))
+            db.set_monitor_info(doc_id,
+                                DocMonitorInfo(new_revision, now, update_time))
 
     def maybe_add_to_notify_queue(self, db, doc_id, export_res):
         """
@@ -137,5 +139,12 @@ class ChangeMonitor:
 
     def summary_update(self, db):
         notify_info = db.get_notify_info()
+        output = []
+        output.append("Recent update from MLGroup Dropbox Paper")
         for info in notify_info:
-            print("Owner: %s, Doc: %s" % (info.owner, info.title))
+            last_update_time = db.doc_monitor_info(
+                info.doc_id).last_update_time
+            output.append("Detected update date: %s<br \>Owner: %s, Doc: %s<br/>" %
+                          (last_update_time.strftime('%Y-%m-%d'), info.owner,
+                           info.title))
+        return '<br />\n'.join(output)
