@@ -1,9 +1,10 @@
 import redis
 import pickle
 from collections import namedtuple
+import dateutil.relativedelta as relativedelta
 
 DocMonitorInfo = namedtuple('DocMonitorInfo',
-                            ['revision', 'last_monitor_time'])
+                            ['revision', 'last_monitor_time', 'last_update_time'])
 
 
 class Database:
@@ -30,9 +31,33 @@ class Database:
 class ChangeMonitor:
     """
     The monitor will fetch revision info for possiblely out-dated docs, update
-    their `last_monitor_time`, and add updated doc to notification-queue
-
+    their `last_monitor_time`, and add updated doc to notification-queue.
     """
+    def __init__(self, monitor_time, since_n_days):
+        """
+        Monitor change since n days from monitor_time
 
-    def __init__(self):
+        monitor_time: datetime.datetime
+        since_n_days: int
+        """
+        self.monitor_time = monitor_time
+        self.since_n_days = since_n_days
+        self.outdated_date = monitor_time - relativedelta.relativedelta(day=since_n_days)
+
+    def filter_possibly_outdated_doc_ids(self, db, doc_ids):
+        """
+        Given a list of ids, return a new list of possibly outdated ids
+        """
+        new_doc_ids = []
+
+        def _possibly_oudated(doc_id):
+            doc_monitor_info = db.get(doc_id)
+            if doc_monitor_info is None:
+                new_doc_ids.append(doc_id)
+            else:
+                last_monitor_time = doc_monitor_info.last_monitor_time
+                return last_monitor_time < self.outdated_date
+        return list(filter(_possibly_oudated, doc_ids))
+
+    def scan(self, dbx):
         pass
