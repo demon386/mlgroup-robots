@@ -115,7 +115,7 @@ class ChangeMonitor:
             old_revision = doc_monitor_info.revision
             if new_revision > old_revision:
                 update_time = now
-                logging.info("revision updated, old: %d, new: %d" (
+                logging.info("revision updated, old: %d, new: %d" % (
                     old_revision, new_revision))
             else:
                 update_time = doc_monitor_info.last_update_time
