@@ -48,7 +48,7 @@ def send_email(summary, to):
     msg['FROM'] = from_
     msg['Subject'] = 'Recent Update from MLGroup [%s]' % datetime.now(
     ).strftime("%Y-%m-%d")
-    msg['To'] = to
+    msg['To'] = ', '.join(to)
     attach = MIMEText(summary, 'html', 'UTF-8')
     msg.attach(attach)
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         sys.exit(1)
     dbx = dropbox.Dropbox(access_token)
     db = Database()
-    monitor = ChangeMonitor(datetime.now(), 7)
+    monitor = ChangeMonitor(datetime.now(), 1)
     monitor.scan(dbx, db)
     summary = monitor.summary_update(db)
     print(summary)
@@ -80,6 +80,6 @@ if __name__ == "__main__":
             print(msg, file=sys.stderr)
             logging.fatal(msg)
             sys.exit(1)
-        to = ','.join(i.strip() for i in open(args.target).readlines())
+        to = [i.strip() for i in open(args.target).readlines()]
         send_email(summary, to)
         db.clear_notify_info()
